@@ -1,30 +1,29 @@
 ##############################################################
-# BG-NBD ve Gamma-Gamma ile CLTV Prediction
+# CLTV Prediction with BG-NBD and Gamma-Gamma Model
 ##############################################################
 
 # 1. Verinin Hazırlanması (Data Preperation)
-# 2. BG-NBD Modeli ile Expected Number of Transaction
-# 3. Gamma-Gamma Modeli ile Expected Average Profit
-# 4. BG-NBD ve Gamma-Gamma Modeli ile CLTV'nin Hesaplanması
-# 5. CLTV'ye Göre Segmentlerin Oluşturulması
-# 6. Çalışmanın fonksiyonlaştırılması
+# 2. Expected Number of Transaction with BG-NBD Model
+# 3. Expected Average Profit with Gamma-Gamma Modeli
+# 4. CLTV prediction with Gamma-Gamma Model
+# 5. Defining Segments according to CLTV
+# 6. Sum up all steps in function
 
 
 ##############################################################
 # 1. Verinin Hazırlanması (Data Preperation)
 ##############################################################
 
-# Bir e-ticaret şirketi müşterilerini segmentlere ayırıp bu segmentlere göre
-# pazarlama stratejileri belirlemek istiyor.
+#Business Requirement
+#An e-commerce company divides its customers into segments and according to these segments.Wants to define marketing strategies.
 
-# Veri Seti Hikayesi
+# Dataset
 
 # https://archive.ics.uci.edu/ml/datasets/Online+Retail+II
 
-# Online Retail II isimli veri seti İngiltere merkezli online bir satış mağazasının
-# 01/12/2009 - 09/12/2011 tarihleri arasındaki satışlarını içeriyor.
+# The data set named Online Retail II was obtained from a UK-based online store. Includes sales between 01/12/2009 - 09/12/2011
 
-# Değişkenler
+# Variables
 
 # InvoiceNo: Fatura numarası. Her işleme yani faturaya ait eşsiz numara. C ile başlıyorsa iptal edilen işlem.
 # StockCode: Ürün kodu. Her bir ürün için eşsiz numara.
@@ -37,7 +36,7 @@
 
 
 ##########################
-# Gerekli Kütüphane ve Fonksiyonlar
+# Libraries
 ##########################
 
 # !pip install lifetimes
@@ -53,8 +52,10 @@ pd.set_option('display.width', 500)
 pd.set_option('display.float_format', lambda x: '%.4f' % x)
 from sklearn.preprocessing import MinMaxScaler
 
-#Normalde IQR %25 ve %75 dilim için yapılıt fakat burada farklı değer girilmiş. Sebebi değişim çok fazla olmadığı için
-#Eğer 25-75 seçilirse çok sazla veri silinecek. O yüzden daha uç noktada threshold seçildi.
+#Normally IQR is made for 25% and 75% slice, but different value is entered here.
+#The reason is that the change is not too much, if 25-75 is selected, a lot of data will be deleted.
+#That's why threshold was chosen at the more extreme point
+
 def outlier_thresholds(dataframe, variable):
     quartile1 = dataframe[variable].quantile(0.01)
     quartile3 = dataframe[variable].quantile(0.99)
@@ -72,7 +73,7 @@ def replace_with_thresholds(dataframe, variable):
 
 
 #########################
-# Verinin Okunması
+# Load Data
 #########################
 
 df_ = pd.read_excel(r"C:\Users\USER\Desktop\PyCharm\W3\crm_analytics\datasets\online_retail_II.xlsx",sheet_name="Year 2010-2011")
@@ -82,7 +83,7 @@ df.head()
 df.isnull().sum()
 
 #########################
-# Veri Ön İşleme
+# Data Preprocessing
 #########################
 
 df.dropna(inplace=True)
@@ -98,13 +99,14 @@ df["TotalPrice"] = df["Quantity"] * df["Price"]
 today_date = dt.datetime(2011, 12, 11)
 
 #########################
-# Lifetime Veri Yapısının Hazırlanması
+# Preparation of Lifetime Data Structure
 #########################
 
-# recency: Son satın alma üzerinden geçen zaman. Haftalık. (kullanıcı özelinde)
-# T: Müşterinin yaşı. Haftalık. (analiz tarihinden ne kadar süre önce ilk satın alma yapılmış)
-# frequency: tekrar eden toplam satın alma sayısı (frequency>1)
-# monetary: satın alma başına ortalama kazanç
+
+# recency: The elapsed time since the last purchase. Weekly. (user specific)
+# T: The age of the customer. Weekly. (how long before the analysis date the first purchase was made)
+# frequency: total number of repeat purchases (frequency>1)
+# monetary: average earnings per purchase
 
 
 cltv_df = df.groupby('Customer ID').agg(
@@ -129,7 +131,7 @@ cltv_df["T"] = cltv_df["T"] / 7
 
 
 ##############################################################
-# 2. BG-NBD Modelinin Kurulması
+# 2. BG-NBD Model
 ##############################################################
 
 bgf = BetaGeoFitter(penalizer_coef=0.001)
@@ -139,7 +141,7 @@ bgf.fit(cltv_df['frequency'],
         cltv_df['T'])
 
 ################################################################
-# 1 hafta içinde en çok satın alma beklediğimiz 10 müşteri kimdir?
+# Who are the 10 customers we expect the most to purchase in 1 week?
 ################################################################
 
 bgf.conditional_expected_number_of_purchases_up_to_time(1,
@@ -177,7 +179,7 @@ bgf.predict(4,
             cltv_df['T']).sum()
 
 ################################################################
-# 3 Ayda Tüm Şirketin Beklenen Satış Sayısı Nedir?
+#Who are the 10 customers we expect the most to purchase in 1 month?
 ################################################################
 
 bgf.predict(4 * 3,
@@ -190,14 +192,14 @@ cltv_df["expected_purc_3_month"] = bgf.predict(4 * 3,
                                                cltv_df['recency'],
                                                cltv_df['T'])
 ################################################################
-# Tahmin Sonuçlarının Değerlendirilmesi
+#Evaluation of Forecast Results
 ################################################################
 
 plot_period_transactions(bgf)
 plt.show()
 
 ##############################################################
-# 3. GAMMA-GAMMA Modelinin Kurulması
+# 3. Establishing the GAMMA-GAMMA Model
 ##############################################################
 
 ggf = GammaGammaFitter(penalizer_coef=0.01)
@@ -215,7 +217,7 @@ cltv_df["expected_average_profit"] = ggf.conditional_expected_average_profit(clt
 cltv_df.sort_values("expected_average_profit", ascending=False).head(10)
 
 ##############################################################
-# 4. BG-NBD ve GG modeli ile CLTV'nin hesaplanması.
+# 4. Calculation of CLTV with BG-NBD and GG model.
 ##############################################################
 
 cltv = ggf.customer_lifetime_value(bgf,
@@ -236,7 +238,7 @@ cltv_final.sort_values(by="clv", ascending=False).head(10)
 
 
 ##############################################################
-# 5. CLTV'ye Göre Segmentlerin Oluşturulması
+# 5. Creating Segments by CLTV
 ##############################################################
 
 cltv_final
@@ -251,7 +253,7 @@ cltv_final.groupby("segment").agg(
 
 
 ##############################################################
-# 6. Çalışmanın Fonksiyonlaştırılması
+# 6.Functionalization of the Study
 ##############################################################
 
 def create_cltv_p(dataframe, month=3):
