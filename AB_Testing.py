@@ -1,3 +1,6 @@
+#DataSet Info : This data set, which includes a company's website information, includes information such as the number of ads users saw and clicked, as well as 
+#earnings information from here. There are two separate data sets as Control and Test group. These data sets
+#ab_testing.xlsx are located on separate pages of excel. Maximum Bidding to the control group, Average to the test group Bidding implemented
 
 import numpy as np
 import pandas as pd
@@ -13,11 +16,12 @@ pd.set_option('display.max_rows', None)
 pd.set_option('display.expand_frame_repr', False)
 pd.set_option('display.float_format', lambda x: '%.5f' % x)
 
-#Kontrol grubuna Max Bidding
-#Test Grubuna Avg Bidding uygulandı
+#Control Group Max Bidding
+#Test Group Avg Bidding 
 
-#Görev1
-#Adım1
+
+#Load and Analyze Data
+
 df_conrol = pd.read_excel("W4/HW1/ab_testing.xlsx",sheet_name="Control Group")
 #df_conrol.columns=["C_Impression","C_Click","C_Purchase","C_Earning"]
 df_conrol["Group"]="C"
@@ -45,29 +49,30 @@ df.head(50)
 #Adım2
 df.groupby("Group").agg({"Purchase":"mean"})
 
-#Görev3
-#Normallik testi yapılır
-# H0: Normal dağılım varsayımı sağlanmaktadır.
-# H1:..sağlanmamaktadır.
+#Normality test
+
+#H0 : M1 = M2 
+#H1 : M1!= M2
 
 test_stat, pvalue = shapiro(df.loc[df["Group"] == "C", "Purchase"])
 print('Test Stat = %.4f, p-value = %.4f' % (test_stat, pvalue))
 
 test_stat, pvalue = shapiro(df.loc[df["Group"] == "T", "Purchase"])
 print('Test Stat = %.4f, p-value = %.4f' % (test_stat, pvalue))
-#Sonuç Normaldir.
+#Test Result is Normal.
 
-#Varyans homojenliği testi yapılır.
-# H0: Varyanslar Homojendir
-# H1: Varyanslar Homojen Değildir
+#Variance homogeneity test
+
+# H0: Variances are Homogeneous
+# H1: Variances are not Homogeneous
 
 test_stat, pvalue = levene(df.loc[df["Group"] == "C", "Purchase"],
                            df.loc[df["Group"] == "T", "Purchase"])
 print('Test Stat = %.4f, p-value = %.4f' % (test_stat, pvalue))
 
-#Ho reddedilemez. Varyans homojenliği kabul edilir.
+#Ho cannot be denied. Variance homogeneity is accepted.
 
-#Bu sonuçlara göre bağımsız iki örneklem t testi yapılır.
+#According to these results, an independent two-sample t-test is applied.
 
 test_stat, pvalue = ttest_ind(df.loc[df["Group"] == "C", "Purchase"],
                            df.loc[df["Group"] == "T", "Purchase"],
@@ -75,15 +80,15 @@ test_stat, pvalue = ttest_ind(df.loc[df["Group"] == "C", "Purchase"],
 
 print('Test Stat = %.4f, p-value = %.4f' % (test_stat, pvalue))
 
-#Sonuca istinaden M1=M2 hipotezi reddedilemez. Control ve Test verilerinin purchase ortalamaları arasında anlamlı
-#Fark yoktur. Yani değişim işe yaramamıştır.
+#Based on the result, the hypothesis M1=M2 cannot be rejected. 
+#There is no significant difference between the purchase averages of the Control and Test data. So the change didn't work.
 
-#Görev4
+#Results
 
-# Normallik ve varyans homojenliği sağlandığı için  bağımsız iki örneklem t testi kullanılımıştır.
-#Bu testin sonucunda da p değeri 0.05'ten küçük olmadığı için en başta kurulan hipotez reddedilemez.
-#Matematiksel olarak MaxBidding Purchase ortalaması ile Avg Bidding Purchase ortalaması 550 vs 580 idi.
-#Burada anlamlı bir fark var gibi görülmesine rağmen yapılan test sonuçlarında bu farkın tesadüfi olduğu gözlemlendi.
+# Independent two-sample t-test was used to ensure normality and homogeneity of variance. 
+#Since the p value is not less than 0.05 as a result of this test, the original hypothesis cannot be rejected.
+#Mathematically, the Avg Bidding Purchase average was 550 vs 580 with the MaxBidding Purchase average.
+#Although there seems to be a significant difference here, it was observed that this difference was coincidental in the test results.
 
-#Biraz daha uzun süre gözlem yapılara yeni veriler de araştırmaya dahil edilebilir.
+#New data for slightly longer observation structures can also be included in the research.
 
