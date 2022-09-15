@@ -14,16 +14,17 @@
 # 1. İş Problemi (Business Problem)
 ###############################################################
 
-# Bir e-ticaret şirketi müşterilerini segmentlere ayırıp bu segmentlere göre
-# pazarlama stratejileri belirlemek istiyor.
 
-# Veri Seti Hikayesi
+
+# Dataset
 # https://archive.ics.uci.edu/ml/datasets/Online+Retail+II
 
-# Online Retail II isimli veri seti İngiltere merkezli online bir satış mağazasının
-# 01/12/2009 - 09/12/2011 tarihleri arasındaki satışlarını içeriyor.
+#Business Problem
+# An e-commerce company wants to segment its customers and determine marketing strategies according to these segments.
 
-# Değişkenler
+# The dataset named Online Retail II includes the sales of an UK-based online store between 01/12/2009 - 09/12/2011.
+
+# Variables
 #
 # InvoiceNo: Fatura numarası. Her işleme yani faturaya ait eşsiz numara. C ile başlıyorsa iptal edilen işlem.
 # StockCode: Ürün kodu. Her bir ürün için eşsiz numara.
@@ -161,7 +162,7 @@ new_df.to_csv("new_customers.csv")
 rfm.to_csv("rfm.csv")
 
 ###############################################################
-# 7. Tüm Sürecin Fonksiyonlaştırılması
+# 7. Sum up All Processes 
 ###############################################################
 
 def create_rfm(dataframe, csv=False):
